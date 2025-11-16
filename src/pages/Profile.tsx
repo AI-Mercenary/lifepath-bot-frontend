@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, User, Bell, Shield, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -28,11 +29,14 @@ const Profile = () => {
     <div className="min-h-screen bg-gradient-subtle">
       {/* Header */}
       <header className="bg-card shadow-sm p-4">
-        <div className="max-w-4xl mx-auto flex items-center space-x-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-2xl font-bold">Profile & Settings</h1>
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-2xl font-bold">Profile & Settings</h1>
+          </div>
+          <ThemeToggle />
         </div>
       </header>
 

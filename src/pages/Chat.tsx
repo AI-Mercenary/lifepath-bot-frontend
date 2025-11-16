@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Send, Sparkles, Target, TrendingUp, Lightbulb } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface Message {
   id: number;
@@ -67,19 +68,22 @@ const Chat = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
       {/* Header */}
-      <header className="bg-card shadow-sm p-4 flex items-center space-x-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-hero rounded-full flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="font-semibold text-lg">LifePathBot</h1>
-            <p className="text-xs text-muted-foreground">Always here to help</p>
+      <header className="bg-card shadow-sm p-4 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-hero rounded-full flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-semibold text-lg">LifePathBot</h1>
+              <p className="text-xs text-muted-foreground">Always here to help</p>
+            </div>
           </div>
         </div>
+        <ThemeToggle />
       </header>
 
       {/* Messages */}

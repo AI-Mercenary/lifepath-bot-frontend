@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, Plus, GraduationCap, Briefcase, Heart, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface Goal {
   id: number;
@@ -72,10 +73,13 @@ const Goals = () => {
             </Button>
             <h1 className="text-2xl font-bold">My Goals</h1>
           </div>
-          <Button className="bg-gradient-hero text-primary-foreground hover:shadow-glow">
-            <Plus className="w-4 h-4 mr-2" />
-            New Goal
-          </Button>
+          <div className="flex items-center space-x-2">
+            <ThemeToggle />
+            <Button className="bg-gradient-hero text-primary-foreground hover:shadow-glow">
+              <Plus className="w-4 h-4 mr-2" />
+              New Goal
+            </Button>
+          </div>
         </div>
       </header>
 

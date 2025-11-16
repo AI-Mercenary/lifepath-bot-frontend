@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { MessageCircle, Flame, Target, Smile, Menu, User, TrendingUp } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import MoodWidget from "@/components/dashboard/MoodWidget";
 import StreakTracker from "@/components/dashboard/StreakTracker";
 import QuickTasks from "@/components/dashboard/QuickTasks";
@@ -41,6 +42,7 @@ const Dashboard = () => {
               <h1 className="text-2xl font-bold text-foreground tracking-tight">LifePathBot</h1>
             </div>
             <div className="flex items-center space-x-2">
+              <ThemeToggle />
               <Button
                 variant="ghost"
                 size="icon"
