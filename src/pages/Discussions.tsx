@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { NavLink } from "@/components/NavLink";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface Discussion {
   id: string;
@@ -125,27 +125,28 @@ const Discussions = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
-              <NavLink to="/dashboard" className="text-xl font-bold text-foreground">
-                LifePathBot
-              </NavLink>
+              <h1 className="text-xl font-bold text-foreground">LifePathBot</h1>
               <nav className="hidden md:flex gap-6">
-                <NavLink to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Button variant="ghost" size="sm" onClick={() => window.location.href = "/dashboard"} className="text-sm text-muted-foreground hover:text-foreground">
                   Dashboard
-                </NavLink>
-                <NavLink to="/goals" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => window.location.href = "/goals"} className="text-sm text-muted-foreground hover:text-foreground">
                   Goals
-                </NavLink>
-                <NavLink to="/chat" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => window.location.href = "/chat"} className="text-sm text-muted-foreground hover:text-foreground">
                   AI Coach
-                </NavLink>
-                <NavLink to="/discussions" className="text-sm font-medium text-primary">
+                </Button>
+                <Button variant="ghost" size="sm" className="text-sm font-medium text-primary">
                   Discussions
-                </NavLink>
+                </Button>
               </nav>
             </div>
-            <NavLink to="/profile">
-              <Button variant="outline" size="sm">Profile</Button>
-            </NavLink>
+            <div className="flex items-center space-x-2">
+              <ThemeToggle />
+              <Button variant="outline" size="sm" onClick={() => window.location.href = "/profile"}>
+                Profile
+              </Button>
+            </div>
           </div>
         </div>
       </header>
