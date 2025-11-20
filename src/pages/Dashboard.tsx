@@ -2,23 +2,30 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { MessageCircle, Flame, Target, Smile, Menu, User, TrendingUp } from "lucide-react";
+import {
+  MessageCircle,
+  Flame,
+  Target,
+  Smile,
+  User,
+  TrendingUp,
+  BookOpen,
+  Calendar,
+  Sparkles,
+  Menu,
+  GraduationCap,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import MoodWidget from "@/components/dashboard/MoodWidget";
 import StreakTracker from "@/components/dashboard/StreakTracker";
 import QuickTasks from "@/components/dashboard/QuickTasks";
+import { useApp } from "@/context/AppContext";
+import { Badge } from "@/components/ui/badge";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [userName, setUserName] = useState("Student");
-
-  useEffect(() => {
-    const profile = localStorage.getItem("userProfile");
-    if (profile) {
-      const data = JSON.parse(profile);
-      setUserName(data.name || "Student");
-    }
-  }, []);
+  const { user, goals, reflections, examMode } = useApp();
+  const userName = user?.name || "Student";
 
   const motivationalQuotes = [
     "Progress, not perfection. You're doing great!",
@@ -28,6 +35,10 @@ const Dashboard = () => {
   ];
 
   const todayQuote = motivationalQuotes[new Date().getDay() % motivationalQuotes.length];
+
+  const activeGoals = goals.filter((g) => !g.isCompleted && g.progress < 100);
+  const completedGoals = goals.filter((g) => g.isCompleted || g.progress === 100);
+  const recentReflections = reflections.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -40,6 +51,12 @@ const Dashboard = () => {
                 <Flame className="w-6 h-6 text-primary-foreground" />
               </div>
               <h1 className="text-2xl font-bold text-foreground tracking-tight">LifePathBot</h1>
+              {examMode && (
+                <Badge className="bg-primary/20 text-primary border-primary/30">
+                  <GraduationCap className="w-3 h-3 mr-1" />
+                  Exam Mode
+                </Badge>
+              )}
             </div>
             <div className="flex items-center space-x-2">
               <ThemeToggle />
@@ -91,29 +108,99 @@ const Dashboard = () => {
               </div>
             </Card>
 
-            {/* Chat with Bot CTA */}
-            <Card className="p-8 shadow-card hover:shadow-glow border-border/50 transition-all duration-300 cursor-pointer group relative overflow-hidden" onClick={() => navigate("/chat")}>
-              <div className="absolute inset-0 bg-gradient-hero opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
-              <div className="relative z-10 flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold mb-2 flex items-center text-foreground">
-                    <MessageCircle className="w-6 h-6 mr-3 text-primary" />
-                    Chat with LifePathBot
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    Ready to reflect on your day? I'm here to help you stay on track!
+            {/* Quick Actions Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Chat with Bot */}
+              <Card
+                className="p-6 shadow-card hover:shadow-glow border-border/50 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+                onClick={() => navigate("/chat")}
+              >
+                <div className="absolute inset-0 bg-gradient-hero opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                    <MessageCircle className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-1 text-foreground">Chat with LifePathBot</h3>
+                  <p className="text-sm text-muted-foreground">Reflect on your day and get guidance</p>
+                </div>
+              </Card>
+
+              {/* Goals */}
+              <Card
+                className="p-6 shadow-card hover:shadow-glow border-border/50 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+                onClick={() => navigate("/goals")}
+              >
+                <div className="absolute inset-0 bg-gradient-hero opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                    <Target className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-1 text-foreground">My Goals</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {activeGoals.length} active, {completedGoals.length} completed
                   </p>
                 </div>
-                <div className="ml-6">
-                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300 shadow-soft">
-                    <MessageCircle className="w-8 h-8 text-primary" />
+              </Card>
+
+              {/* Reflections */}
+              <Card
+                className="p-6 shadow-card hover:shadow-glow border-border/50 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+                onClick={() => navigate("/reflections")}
+              >
+                <div className="absolute inset-0 bg-gradient-hero opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                    <BookOpen className="w-6 h-6 text-primary" />
                   </div>
+                  <h3 className="font-semibold text-lg mb-1 text-foreground">Daily Reflections</h3>
+                  <p className="text-sm text-muted-foreground">{reflections.length} reflections logged</p>
                 </div>
-              </div>
-            </Card>
+              </Card>
+
+              {/* Analytics */}
+              <Card
+                className="p-6 shadow-card hover:shadow-glow border-border/50 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+                onClick={() => navigate("/analytics")}
+              >
+                <div className="absolute inset-0 bg-gradient-hero opacity-0 group-hover:opacity-5 transition-opacity duration-300" />
+                <div className="relative z-10">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                    <TrendingUp className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-1 text-foreground">Analytics</h3>
+                  <p className="text-sm text-muted-foreground">View your weekly summary and progress</p>
+                </div>
+              </Card>
+            </div>
 
             {/* Quick Tasks */}
             <QuickTasks />
+
+            {/* Additional Quick Links */}
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                variant="outline"
+                className="h-auto py-4 justify-start border-2 hover:border-primary hover:bg-primary/10"
+                onClick={() => navigate("/calendar")}
+              >
+                <Calendar className="w-5 h-5 mr-3 text-primary" />
+                <div className="text-left">
+                  <div className="font-semibold">Calendar</div>
+                  <div className="text-xs text-muted-foreground">View goals & tasks</div>
+                </div>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-auto py-4 justify-start border-2 hover:border-primary hover:bg-primary/10"
+                onClick={() => navigate("/motivation")}
+              >
+                <Sparkles className="w-5 h-5 mr-3 text-primary" />
+                <div className="text-left">
+                  <div className="font-semibold">Motivation</div>
+                  <div className="text-xs text-muted-foreground">Get inspired</div>
+                </div>
+              </Button>
+            </div>
           </div>
 
           {/* Right Column */}
@@ -134,24 +221,34 @@ const Dashboard = () => {
                 <div>
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-muted-foreground font-medium">Goals Completed</span>
-                    <span className="font-semibold text-foreground">3/5</span>
+                    <span className="font-semibold text-foreground">
+                      {completedGoals.length}/{goals.length}
+                    </span>
                   </div>
                   <div className="h-2.5 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-hero w-3/5 transition-all duration-500 rounded-full" />
+                    <div
+                      className="h-full bg-gradient-hero transition-all duration-500 rounded-full"
+                      style={{
+                        width: `${goals.length > 0 ? (completedGoals.length / goals.length) * 100 : 0}%`,
+                      }}
+                    />
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground font-medium">Study Hours</span>
-                    <span className="font-semibold text-foreground">18/20h</span>
+                    <span className="text-muted-foreground font-medium">Reflections This Week</span>
+                    <span className="font-semibold text-foreground">{recentReflections.length}</span>
                   </div>
                   <div className="h-2.5 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-warm w-[90%] transition-all duration-500 rounded-full" />
+                    <div
+                      className="h-full bg-gradient-warm transition-all duration-500 rounded-full"
+                      style={{ width: `${Math.min((recentReflections.length / 7) * 100, 100)}%` }}
+                    />
                   </div>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full mt-5 border-primary/40 text-primary hover:bg-primary/10 hover:border-primary font-medium"
                 onClick={() => navigate("/analytics")}
               >

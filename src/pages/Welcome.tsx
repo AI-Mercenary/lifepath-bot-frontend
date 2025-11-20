@@ -67,7 +67,7 @@ const Welcome = () => {
             size="lg" 
             variant="outline" 
             className="border-2 border-primary text-primary hover:bg-primary/10 text-lg px-8 py-6"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/login")}
           >
             I Have an Account
           </Button>

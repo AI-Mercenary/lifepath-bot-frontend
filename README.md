@@ -1,73 +1,89 @@
-# Welcome to your Lovable project
+# LifePathBot - AI-Powered Student Goal Tracker
 
-## Project info
+A comprehensive student life management application with AI-powered chatbot, goal tracking, daily reflections, analytics, and more.
 
-**URL**: https://lovable.dev/projects/e530163a-71f6-4f31-bccb-e57d75ac5d99
+## Features
 
-## How can I edit this code?
+- **Authentication & User Management**: Registration, login, profile management
+- **AI Chatbot**: Powered by Gemini Flash 2.0 with natural language processing
+- **Goal Management**: SMART goals with progress tracking, deadlines, and categories
+- **Daily Reflections**: Mood tracking, productivity logging, and journal entries
+- **Analytics & Reports**: Weekly summaries with visual charts and trends
+- **Calendar View**: Visual calendar with goals, tasks, and reflections
+- **Motivation Board**: Quotes, tips, and success stories
+- **Exam Mode**: High-focus mode for exam periods
+- **Notifications**: Customizable reminder system
+- **Data Export**: Privacy-compliant data export functionality
 
-There are several ways of editing your application.
+## Technologies
 
-**Use Lovable**
+- **Vite** - Build tool and dev server
+- **TypeScript** - Type safety
+- **React** - UI framework
+- **shadcn/ui** - Component library
+- **Tailwind CSS** - Styling
+- **React Router** - Navigation
+- **Recharts** - Data visualization
+- **Gemini API** - AI chatbot integration
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/e530163a-71f6-4f31-bccb-e57d75ac5d99) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js (v18 or higher)
+- npm or yarn
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+1. Clone the repository:
+```bash
 git clone <YOUR_GIT_URL>
+cd lifepathbot-frontend
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. Install dependencies:
+```bash
+npm install
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. Set up environment variables:
+   - Create a `.env` file in the root directory
+   - Add your Gemini API key:
+   ```
+   VITE_GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+   - Get your API key from: https://makersuite.google.com/app/apikey
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+4. Start the development server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Available Scripts
 
-**Use GitHub Codespaces**
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Project Structure
 
-## What technologies are used for this project?
+```
+src/
+├── components/     # Reusable UI components
+├── context/        # React context for state management
+├── hooks/          # Custom React hooks
+├── lib/            # Utility functions and API integrations
+├── pages/          # Page components
+└── App.tsx         # Main application component
+```
 
-This project is built with:
+## Backend Integration
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+This frontend is designed to work with a MongoDB backend. See the API documentation for the required endpoints.
 
-## How can I deploy this project?
+## License
 
-Simply open [Lovable](https://lovable.dev/projects/e530163a-71f6-4f31-bccb-e57d75ac5d99) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+MIT

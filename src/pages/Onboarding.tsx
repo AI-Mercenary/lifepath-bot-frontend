@@ -6,24 +6,36 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRight, ArrowLeft, User, GraduationCap, Target, Clock } from "lucide-react";
+import { useApp } from "@/context/AppContext";
+import { toast } from "sonner";
 
 const Onboarding = () => {
   const [step, setStep] = useState(1);
+  const { user, updateUser } = useApp();
   const [formData, setFormData] = useState({
-    name: "",
-    branch: "",
-    year: "",
     goals: "",
-    wakeTime: "",
-    sleepTime: "",
-    notifications: "email",
+    wakeTime: user?.preferences?.wakeTime || "07:00",
+    sleepTime: user?.preferences?.sleepTime || "23:00",
+    notifications: user?.preferences?.notifications || "app",
   });
   const navigate = useNavigate();
 
   const handleNext = () => {
-    if (step < 4) setStep(step + 1);
-    else {
-      localStorage.setItem("userProfile", JSON.stringify(formData));
+    if (step < 4) {
+      setStep(step + 1);
+    } else {
+      // Save preferences
+      if (user) {
+        updateUser({
+          preferences: {
+            ...user.preferences,
+            wakeTime: formData.wakeTime,
+            sleepTime: formData.sleepTime,
+            notifications: formData.notifications,
+          },
+        });
+      }
+      toast.success("Onboarding complete! Welcome to LifePathBot 🎉");
       navigate("/dashboard");
     }
   };
@@ -38,11 +50,16 @@ const Onboarding = () => {
 
   const isStepValid = () => {
     switch (step) {
-      case 1: return formData.name.trim() !== "";
-      case 2: return formData.branch.trim() !== "" && formData.year !== "";
-      case 3: return formData.goals.trim() !== "";
-      case 4: return formData.wakeTime !== "" && formData.sleepTime !== "";
-      default: return true;
+      case 1:
+        return true; // Welcome step
+      case 2:
+        return formData.goals.trim() !== "";
+      case 3:
+        return formData.wakeTime !== "" && formData.sleepTime !== "";
+      case 4:
+        return true; // Preferences step
+      default:
+        return true;
     }
   };
 
@@ -53,76 +70,35 @@ const Onboarding = () => {
         <div className="flex justify-between mb-8">
           {[1, 2, 3, 4].map((num) => (
             <div key={num} className="flex-1 mx-1">
-              <div className={`h-2 rounded-full transition-all duration-300 ${
-                num <= step ? "bg-gradient-hero" : "bg-muted"
-              }`} />
+              <div
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  num <= step ? "bg-gradient-hero" : "bg-muted"
+                }`}
+              />
             </div>
           ))}
         </div>
 
-        {/* Step 1: Personal Info */}
+        {/* Step 1: Welcome */}
         {step === 1 && (
           <div className="space-y-6 animate-fade-in">
             <div className="text-center mb-6">
               <div className="inline-block p-3 bg-primary/10 rounded-full mb-3">
                 <User className="w-8 h-8 text-primary" />
               </div>
-              <h2 className="text-3xl font-bold">Let's get to know you!</h2>
-              <p className="text-muted-foreground mt-2">Tell us a bit about yourself</p>
+              <h2 className="text-3xl font-bold">Welcome to LifePathBot!</h2>
+              <p className="text-muted-foreground mt-2">
+                Let's personalize your experience, {user?.name || "Student"}
+              </p>
             </div>
-            <div>
-              <Label htmlFor="name">What's your name?</Label>
-              <Input
-                id="name"
-                placeholder="Enter your name"
-                value={formData.name}
-                onChange={(e) => updateFormData("name", e.target.value)}
-                className="mt-2"
-              />
-            </div>
+            <p className="text-center text-muted-foreground">
+              We'll ask you a few quick questions to set up your profile and preferences.
+            </p>
           </div>
         )}
 
-        {/* Step 2: Academic Info */}
+        {/* Step 2: Goals */}
         {step === 2 && (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center mb-6">
-              <div className="inline-block p-3 bg-secondary/10 rounded-full mb-3">
-                <GraduationCap className="w-8 h-8 text-secondary" />
-              </div>
-              <h2 className="text-3xl font-bold">Your academic journey</h2>
-              <p className="text-muted-foreground mt-2">Help us personalize your experience</p>
-            </div>
-            <div>
-              <Label htmlFor="branch">Branch/Degree</Label>
-              <Input
-                id="branch"
-                placeholder="e.g., Computer Science, Business"
-                value={formData.branch}
-                onChange={(e) => updateFormData("branch", e.target.value)}
-                className="mt-2"
-              />
-            </div>
-            <div>
-              <Label htmlFor="year">Year of Study</Label>
-              <Select value={formData.year} onValueChange={(value) => updateFormData("year", value)}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Select your year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1st Year</SelectItem>
-                  <SelectItem value="2">2nd Year</SelectItem>
-                  <SelectItem value="3">3rd Year</SelectItem>
-                  <SelectItem value="4">4th Year</SelectItem>
-                  <SelectItem value="grad">Graduate</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Goals */}
-        {step === 3 && (
           <div className="space-y-6 animate-fade-in">
             <div className="text-center mb-6">
               <div className="inline-block p-3 bg-accent/10 rounded-full mb-3">
@@ -144,8 +120,8 @@ const Onboarding = () => {
           </div>
         )}
 
-        {/* Step 4: Routine */}
-        {step === 4 && (
+        {/* Step 3: Routine */}
+        {step === 3 && (
           <div className="space-y-6 animate-fade-in">
             <div className="text-center mb-6">
               <div className="inline-block p-3 bg-primary/10 rounded-full mb-3">
@@ -176,16 +152,32 @@ const Onboarding = () => {
                 />
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Step 4: Preferences */}
+        {step === 4 && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="text-center mb-6">
+              <div className="inline-block p-3 bg-secondary/10 rounded-full mb-3">
+                <GraduationCap className="w-8 h-8 text-secondary" />
+              </div>
+              <h2 className="text-3xl font-bold">Notification Preferences</h2>
+              <p className="text-muted-foreground mt-2">How would you like to receive updates?</p>
+            </div>
             <div>
-              <Label htmlFor="notifications">Notification Preference</Label>
-              <Select value={formData.notifications} onValueChange={(value) => updateFormData("notifications", value)}>
+              <Label htmlFor="notifications">Notification Method</Label>
+              <Select
+                value={formData.notifications}
+                onValueChange={(value) => updateFormData("notifications", value)}
+              >
                 <SelectTrigger className="mt-2">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="app">In-App Only</SelectItem>
                   <SelectItem value="email">Email</SelectItem>
                   <SelectItem value="sms">SMS</SelectItem>
-                  <SelectItem value="app">In-App Only</SelectItem>
                   <SelectItem value="none">None</SelectItem>
                 </SelectContent>
               </Select>
