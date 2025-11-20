@@ -17,6 +17,7 @@ import Reflections from "./pages/Reflections";
 import Analytics from "./pages/Analytics";
 import Calendar from "./pages/Calendar";
 import Motivation from "./pages/Motivation";
+import Discussions from "./pages/Discussions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const AppRoutes = () => (
     <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
     <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
     <Route path="/motivation" element={<ProtectedRoute><Motivation /></ProtectedRoute>} />
+    <Route path="/discussions" element={<ProtectedRoute><Discussions /></ProtectedRoute>} />
     <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>

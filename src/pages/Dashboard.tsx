@@ -177,7 +177,7 @@ const Dashboard = () => {
             <QuickTasks />
 
             {/* Additional Quick Links */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Button
                 variant="outline"
                 className="h-auto py-4 justify-start border-2 hover:border-primary hover:bg-primary/10"
@@ -198,6 +198,17 @@ const Dashboard = () => {
                 <div className="text-left">
                   <div className="font-semibold">Motivation</div>
                   <div className="text-xs text-muted-foreground">Get inspired</div>
+                </div>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-auto py-4 justify-start border-2 hover:border-primary hover:bg-primary/10"
+                onClick={() => navigate("/discussions")}
+              >
+                <MessageCircle className="w-5 h-5 mr-3 text-primary" />
+                <div className="text-left">
+                  <div className="font-semibold">Community Hub</div>
+                  <div className="text-xs text-muted-foreground">Discussions & updates</div>
                 </div>
               </Button>
             </div>
