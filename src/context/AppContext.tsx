@@ -473,8 +473,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         deleteReminder,
         addChatMessage,
         toggleExamMode,
-        addChatMessage,
-        toggleExamMode,
         exportData,
         loginWithGoogle,
       }}
