@@ -262,6 +262,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const loginWithGoogle = async (): Promise<boolean> => {
     try {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const fbUser = result.user;
+      
       // Domain Check for Google Login
       const email = fbUser.email || "";
       const allowedDomains = ["@gitam.student.edu", "@gitam.in"];
