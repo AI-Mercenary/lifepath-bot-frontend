@@ -14,6 +14,7 @@ import {
   Sparkles,
   Menu,
   GraduationCap,
+  LogOut,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import MoodWidget from "@/components/dashboard/MoodWidget";
@@ -24,8 +25,13 @@ import { Badge } from "@/components/ui/badge";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, goals, reflections, examMode } = useApp();
+  const { user, goals, reflections, examMode, logout } = useApp();
   const userName = user?.name || "Student";
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const motivationalQuotes = [
     "Progress, not perfection. You're doing great!",
@@ -77,6 +83,15 @@ const Dashboard = () => {
                 title="Profile"
               >
                 <User className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                className="hover:bg-muted/50 text-destructive hover:text-destructive hover:bg-destructive/10"
+                title="Log Out"
+              >
+                <LogOut className="w-5 h-5" />
               </Button>
             </div>
           </div>

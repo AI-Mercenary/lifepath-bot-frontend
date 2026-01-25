@@ -4,6 +4,8 @@
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
 
+export type AgentType = "general" | "goal_coach" | "motivational" | "analytics" | "reflection";
+
 interface ChatContext {
   userProfile?: {
     name: string;
@@ -13,43 +15,51 @@ interface ChatContext {
   recentGoals?: Array<{ title: string; progress: number }>;
   recentReflections?: Array<{ mood: number; accomplishments: string }>;
   chatHistory?: Array<{ text: string; sender: "user" | "bot" }>;
+  agentType?: AgentType;
 }
 
-const SYSTEM_PROMPT = `You are LifePathBot, a friendly and supportive AI companion designed to help college students with:
-- Daily reflection and goal tracking
-- Academic, career, and personal goal management
-- Mood and stress check-ins
-- Motivation and encouragement
-- SMART goal guidance
-- Productivity tips
+const AGENT_PROMPTS: Record<AgentType, string> = {
+  general: `You are LifePathBot, a friendly and supportive AI companion designed to help college students with daily reflection, goal tracking, and well-being.
+Your personality: Warm, empathetic, encouraging, professional but approachable.
+Focus on student success and well-being. Keep responses concise (2-4 sentences).`,
 
-Your personality:
-- Warm, empathetic, and encouraging
-- Professional but approachable
-- Focused on student success and well-being
-- Uses natural language and avoids being preachy
-- Asks thoughtful follow-up questions
-- Provides actionable advice
+  goal_coach: `You are the Goal Coach Agent. Your sole purpose is to help students set, track, and achieve their SMART goals.
+- Push for specificity (Specific, Measurable, Achievable, Relevant, Time-bound).
+- Ask about deadlines and milestones.
+- Be structured and action-oriented.
+- If a goal is vague, ask clarifying questions to make it concrete.`,
 
-When users share their day, goals, or challenges:
-- Acknowledge their efforts
-- Ask clarifying questions when helpful
-- Offer constructive suggestions
-- Celebrate small wins
-- Help break down large goals into manageable steps
+  motivational: `You are the Motivational Agent. Your role is to uplift, inspire, and encourage the student.
+- Use positive reinforcement.
+- Share inspiring quotes or stories when relevant.
+- Focus on growth mindset.
+- If the user is feeling down or stuck, remind them of their potential and past successes.`,
 
-Keep responses concise (2-4 sentences typically) but meaningful. Use emojis sparingly and appropriately.`;
+  analytics: `You are the Analytics Agent. Your role is to help the student understand their progress and data.
+- Analyze trends in their goals and reflections.
+- Provide data-driven insights (e.g., "You've completed 80% of your goals this week!").
+- Be objective but encouraging.
+- Focus on productivity metrics and consistency.`,
+
+  reflection: `You are the Goal Reflection Agent. Your goal is to guide the student through deep self-reflection.
+- Ask open-ended questions about their day, learning, and feelings.
+- Encourage them to think about what went well and what could be improved.
+- Focus on emotional intelligence and self-awareness.
+- Help them connect their daily actions to their long-term values.`,
+};
 
 export const generateChatResponse = async (
   userMessage: string,
   context?: ChatContext
 ): Promise<string> => {
   if (!GEMINI_API_KEY) {
-    // Fallback response if API key is not configured
-    return "I'm here to help! Please configure the Gemini API key to enable full chat functionality. For now, I can help you with: setting goals, daily reflections, and tracking your progress.";
+    return "I'm here to help! Please configure the Gemini API key to enable full chat functionality.";
   }
 
   try {
+    const agentType = context?.agentType || "general";
+    const systemPrompt = AGENT_PROMPTS[agentType];
+
     // Build context-aware prompt
     let contextInfo = "";
     if (context?.userProfile) {
@@ -63,7 +73,7 @@ export const generateChatResponse = async (
       contextInfo += `Recent Reflection: Mood ${latest.mood}/4, Accomplishments: ${latest.accomplishments}.\n`;
     }
 
-    const fullPrompt = `${SYSTEM_PROMPT}\n\n${contextInfo}\n\nUser: ${userMessage}\n\nLifePathBot:`;
+    const fullPrompt = `${systemPrompt}\n\n${contextInfo}\n\nUser: ${userMessage}\n\n${agentType === 'general' ? 'LifePathBot' : agentType.replace('_', ' ')}:`;
 
     const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",
@@ -103,23 +113,7 @@ export const generateChatResponse = async (
     return botResponse.trim();
   } catch (error) {
     console.error("Gemini API error:", error);
-    // Fallback responses based on message content
-    const lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.includes("goal") || lowerMessage.includes("target")) {
-      return "Setting goals is a great step! Remember to make them SMART: Specific, Measurable, Achievable, Relevant, and Time-bound. What kind of goal are you thinking about?";
-    }
-    if (lowerMessage.includes("mood") || lowerMessage.includes("feel") || lowerMessage.includes("stress")) {
-      return "I'm here to listen. How are you feeling today? Sometimes talking about what's on your mind can help. What's been challenging lately?";
-    }
-    if (lowerMessage.includes("reflect") || lowerMessage.includes("day") || lowerMessage.includes("today")) {
-      return "Reflecting on your day is valuable! What's one thing you accomplished today that you're proud of? And what's something you'd like to improve tomorrow?";
-    }
-    if (lowerMessage.includes("help") || lowerMessage.includes("how")) {
-      return "I can help you with goal setting, daily reflections, mood tracking, and staying motivated. What would you like to work on today?";
-    }
-    
-    return "I understand. Can you tell me more about that? I'm here to help you stay on track with your goals and well-being.";
+    return "I'm having trouble connecting right now. Please try again later.";
   }
 };
 
@@ -129,7 +123,7 @@ export const detectIntent = (message: string): {
   confidence: number;
 } => {
   const lower = message.toLowerCase();
-  
+
   const goalKeywords = ["goal", "target", "achieve", "plan", "objective", "aim"];
   const reflectionKeywords = ["reflect", "today", "accomplish", "challenge", "day"];
   const moodKeywords = ["mood", "feel", "feeling", "stress", "anxious", "worried", "happy", "sad"];

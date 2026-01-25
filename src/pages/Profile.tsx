@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ArrowLeft, User, Bell, Shield, Download, Trash2, Edit, Save, X, GraduationCap } from "lucide-react";
+import { ArrowLeft, User, Bell, Shield, Download, Trash2, Edit, Save, X, GraduationCap, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Switch as SwitchComponent } from "@/components/ui/switch";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -159,7 +159,21 @@ const Profile = () => {
             </Button>
             <h1 className="text-2xl font-bold text-foreground">Profile & Settings</h1>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-3">
+             <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => {
+                  logout();
+                  navigate("/login");
+                }}
+             >
+                <LogOut className="w-4 h-4 mr-2" />
+                Log Out
+             </Button>
+             <ThemeToggle />
+          </div>
         </div>
       </header>
 

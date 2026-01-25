@@ -1,9 +1,14 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { signInWithPopup, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import { auth, googleProvider } from "@/config/firebase";
+import { toast } from "sonner";
+import { syncUserToBackend } from "@/api/users";
 
 interface User {
   id: string;
   name: string;
   email: string;
+  role: "student" | "admin" | "verified";
   branch: string;
   year: string;
   preferences: {
@@ -92,13 +97,18 @@ interface AppContextType {
   deleteReminder: (id: string) => void;
   addChatMessage: (message: Omit<ChatMessage, "id" | "timestamp">) => void;
   toggleExamMode: () => void;
+  toggleExamMode: () => void;
   exportData: () => string;
+  loginWithGoogle: () => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+      const saved = localStorage.getItem("user");
+      return saved ? JSON.parse(saved) : null;
+  });
   const [goals, setGoals] = useState<Goal[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [reflections, setReflections] = useState<Reflection[]>([]);
@@ -106,26 +116,43 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [examMode, setExamMode] = useState(false);
 
-  // Load data from localStorage on mount
+  // Listen to Firebase Auth state changes
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    const savedGoals = localStorage.getItem("goals");
-    const savedTasks = localStorage.getItem("tasks");
-    const savedReflections = localStorage.getItem("reflections");
-    const savedReminders = localStorage.getItem("reminders");
-    const savedChatHistory = localStorage.getItem("chatHistory");
-    const savedExamMode = localStorage.getItem("examMode");
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
+      if (fbUser) {
+        // Map Firebase user to our App User
+        const newUser: User = {
+          id: fbUser.uid,
+          name: fbUser.displayName || "User",
+          email: fbUser.email || "",
+          role: "student", // Default
+          branch: "General", // Placeholder, ideally fetch from Firestore
+          year: "1", // Placeholder
+          preferences: {
+            notifications: "app",
+            wakeTime: "07:00",
+            sleepTime: "23:00",
+            examMode: false,
+          },
+        };
+        // In a real app, we would fetch additional user data (branch, year, preferences) from Firestore here.
+        // For now, we simple sync what we have.
+        setUser((prev) => (prev ? { ...prev, ...newUser } : newUser));
+        
+        // Sync to backend on auto-login too, to ensure DB is consistent
+        syncUserToBackend({
+            firebaseUid: newUser.id,
+            email: newUser.email,
+            name: newUser.name,
+            role: newUser.role
+        }).catch(err => console.error("Auto-sync failed", err));
 
-    if (savedUser) setUser(JSON.parse(savedUser));
-    if (savedGoals) setGoals(JSON.parse(savedGoals));
-    if (savedTasks) setTasks(JSON.parse(savedTasks));
-    if (savedReflections) setReflections(JSON.parse(savedReflections));
-    if (savedReminders) setReminders(JSON.parse(savedReminders));
-    if (savedChatHistory) {
-      const history = JSON.parse(savedChatHistory);
-      setChatHistory(history.map((msg: any) => ({ ...msg, timestamp: new Date(msg.timestamp) })));
-    }
-    if (savedExamMode) setExamMode(JSON.parse(savedExamMode));
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Save to localStorage whenever state changes
@@ -158,16 +185,37 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [examMode]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Check if user exists in localStorage
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const foundUser = users.find((u: any) => u.email === email && u.password === password);
-    
-    if (foundUser) {
-      const { password: _, ...userData } = foundUser;
-      setUser(userData);
+    // Static Admin Check
+    if (email === "lifepathbot@admin.in" && password === "qwerty123") {
+      const adminUser: User = {
+        id: "admin-static",
+        name: "Admin",
+        email: "lifepathbot@admin.in",
+        role: "admin",
+        branch: "Administration",
+        year: "Staff",
+        preferences: {
+          notifications: "all",
+          wakeTime: "06:00",
+          sleepTime: "22:00",
+          examMode: false,
+        },
+      };
+      setUser(adminUser);
+      localStorage.setItem("user", JSON.stringify(adminUser));
+      toast.success("Welcome, Admin");
       return true;
     }
-    return false;
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // Auth state listener will update user
+      return true;
+    } catch (error) {
+      console.error("Login error", error);
+      toast.error("Invalid email or password");
+      return false;
+    }
   };
 
   const register = async (data: {
@@ -177,33 +225,32 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     branch: string;
     year: string;
   }): Promise<boolean> => {
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    
-    if (users.find((u: any) => u.email === data.email)) {
-      return false; // Email already exists
+    try {
+      const result = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      
+      // Update display name
+      if (result.user && auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: data.name });
+      }
+
+      // In a real app, save additional fields (branch, year) to Firestore here.
+      
+      return true;
+    } catch (error: any) {
+      console.error("Registration error", error);
+      if (error.code === 'auth/email-already-in-use') {
+         // Handled in component
+      }
+      return false;
     }
-
-    const newUser: User = {
-      id: Date.now().toString(),
-      name: data.name,
-      email: data.email,
-      branch: data.branch,
-      year: data.year,
-      preferences: {
-        notifications: "app",
-        wakeTime: "07:00",
-        sleepTime: "23:00",
-        examMode: false,
-      },
-    };
-
-    users.push({ ...newUser, password: data.password });
-    localStorage.setItem("users", JSON.stringify(users));
-    setUser(newUser);
-    return true;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout error", error);
+    }
     setUser(null);
     setGoals([]);
     setTasks([]);
@@ -213,10 +260,78 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("user");
   };
 
-  const updateUser = (data: Partial<User>) => {
+  const loginWithGoogle = async (): Promise<boolean> => {
+    try {
+      // Domain Check for Google Login
+      const email = fbUser.email || "";
+      const allowedDomains = ["@gitam.student.edu", "@gitam.in"];
+      const isValidDomain = allowedDomains.some((domain) => email.endsWith(domain));
+
+      // Allow admin email if it happens to be a google login (unlikely for static, but good practice)
+      const isAdmin = email === "lifepathbot@admin.in";
+
+      if (!isValidDomain && !isAdmin) {
+        await signOut(auth); // Sign out immediately
+        toast.error("Please use your GITAM email (@gitam.student.edu or @gitam.in)");
+        return false;
+      }
+
+      // Map Firebase user to our App User
+      const newUser: User = {
+        id: fbUser.uid,
+        name: fbUser.displayName || "User",
+        email: email,
+        role: "student", // Default
+        branch: "General", // Default/Placeholder
+        year: "1", // Default/Placeholder
+        preferences: {
+          notifications: "app",
+          wakeTime: "07:00",
+          sleepTime: "23:00",
+          examMode: false,
+        },
+      };
+
+      // Check if user exists in local storage to preserve extra fields if previously saved?
+      // For now, simple overwrite/login.
+      // Check if user exists in local storage to preserve extra fields if previously saved?
+      // For now, simple overwrite/login.
+      setUser(newUser);
+      localStorage.setItem("user", JSON.stringify(newUser));
+      
+      // Sync to Backend
+      try {
+          await syncUserToBackend({
+              firebaseUid: newUser.id,
+              email: newUser.email,
+              name: newUser.name,
+              role: newUser.role
+          });
+      } catch (err) {
+          console.error("Failed to sync user to backend", err);
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Google Sign In Error", error);
+      toast.error("Failed to sign in. Please try again.");
+      return false;
+    }
+  };
+
+  const updateUser = async (data: Partial<User>) => {
     if (user) {
       const updated = { ...user, ...data };
       setUser(updated);
+      
+      // Sync name to Firebase Auth if changed
+      if (data.name && auth.currentUser) {
+          try {
+              await updateProfile(auth.currentUser, { displayName: data.name });
+          } catch (e) {
+              console.error("Failed to update Firebase profile", e);
+          }
+      }
     }
   };
 
@@ -357,7 +472,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         deleteReminder,
         addChatMessage,
         toggleExamMode,
+        addChatMessage,
+        toggleExamMode,
         exportData,
+        loginWithGoogle,
       }}
     >
       {children}

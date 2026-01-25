@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Target, TrendingUp, Heart } from "lucide-react";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import TrackChangesIcon from "@mui/icons-material/TrackChanges";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 
 const Welcome = () => {
   const navigate = useNavigate();
@@ -11,7 +14,7 @@ const Welcome = () => {
         {/* Hero Section */}
         <div className="text-center space-y-4">
           <div className="inline-block p-4 bg-primary/10 rounded-full mb-4 animate-bounce-in">
-            <Sparkles className="w-16 h-16 text-primary" />
+            <AutoAwesomeIcon className="w-16 h-16 text-primary" />
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-foreground">
             Welcome to <span className="text-primary">LifePathBot</span>
@@ -25,7 +28,7 @@ const Welcome = () => {
         <div className="grid md:grid-cols-3 gap-6 mt-12">
           <div className="bg-card rounded-2xl p-6 shadow-card hover:shadow-soft transition-all duration-300">
             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-              <Target className="w-6 h-6 text-primary" />
+              <TrackChangesIcon className="w-6 h-6 text-primary" />
             </div>
             <h3 className="font-semibold text-lg mb-2">Smart Goal Setting</h3>
             <p className="text-muted-foreground text-sm">
@@ -35,7 +38,7 @@ const Welcome = () => {
 
           <div className="bg-card rounded-2xl p-6 shadow-card hover:shadow-soft transition-all duration-300">
             <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center mb-4">
-              <TrendingUp className="w-6 h-6 text-secondary" />
+              <TrendingUpIcon className="w-6 h-6 text-secondary" />
             </div>
             <h3 className="font-semibold text-lg mb-2">Daily Reflections</h3>
             <p className="text-muted-foreground text-sm">
@@ -45,7 +48,7 @@ const Welcome = () => {
 
           <div className="bg-card rounded-2xl p-6 shadow-card hover:shadow-soft transition-all duration-300">
             <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-4">
-              <Heart className="w-6 h-6 text-accent-foreground" />
+              <FavoriteIcon className="w-6 h-6 text-accent-foreground" />
             </div>
             <h3 className="font-semibold text-lg mb-2">Wellness Tracking</h3>
             <p className="text-muted-foreground text-sm">
