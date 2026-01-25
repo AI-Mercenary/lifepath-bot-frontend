@@ -262,7 +262,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const loginWithGoogle = async (): Promise<boolean> => {
     try {
-    try {
       const result = await signInWithPopup(auth, googleProvider);
       const fbUser = result.user;
       
