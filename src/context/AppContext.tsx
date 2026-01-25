@@ -297,8 +297,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       // Check if user exists in local storage to preserve extra fields if previously saved?
       // For now, simple overwrite/login.
-      // Check if user exists in local storage to preserve extra fields if previously saved?
-      // For now, simple overwrite/login.
       setUser(newUser);
       localStorage.setItem("user", JSON.stringify(newUser));
       
