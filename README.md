@@ -1,89 +1,82 @@
-# LifePathBot - AI-Powered Student Goal Tracker
+# LifePathBot - AI-Powered Student Success Frontend
 
-A comprehensive student life management application with AI-powered chatbot, goal tracking, daily reflections, analytics, and more.
+The frontend for the LifePathBot platform, designed with a modern, dark-themed, glassmorphic UI using React, TypeScript, and Tailwind CSS.
 
-## Features
+## ✨ Features
 
-- **Authentication & User Management**: Registration, login, profile management
-- **AI Chatbot**: Powered by Gemini Flash 2.0 with natural language processing
-- **Goal Management**: SMART goals with progress tracking, deadlines, and categories
-- **Daily Reflections**: Mood tracking, productivity logging, and journal entries
-- **Analytics & Reports**: Weekly summaries with visual charts and trends
-- **Calendar View**: Visual calendar with goals, tasks, and reflections
-- **Motivation Board**: Quotes, tips, and success stories
-- **Exam Mode**: High-focus mode for exam periods
-- **Notifications**: Customizable reminder system
-- **Data Export**: Privacy-compliant data export functionality
+- **Dynamic Chat Interface**: Switch between **Study Mode** (document-based) and **General Mode**.
+- **Multi-File Support**: Secure upload and parsing for PDF, DOCX, and PPTX.
+- **Glassmorphic Dashboard**: Real-time stats, mood tracking, and goal charts.
+- **Goal Management**: Interactive SMART goal tracking.
+- **Calendar & Motivation**: Visual views of your upcoming academic schedule and goals.
+- **Firebase Auth Integration**: Secure user authentication and profiles.
 
-## Technologies
+---
 
-- **Vite** - Build tool and dev server
-- **TypeScript** - Type safety
-- **React** - UI framework
-- **shadcn/ui** - Component library
-- **Tailwind CSS** - Styling
-- **React Router** - Navigation
-- **Recharts** - Data visualization
-- **Gemini API** - AI chatbot integration
+## 🛠️ Tech Stack
 
-## Getting Started
+- **Framework**: [React](https://reactjs.org/) + [Vite](https://vitejs.dev/)
+- **State Management**: [React Context](https://reactjs.org/docs/context.html)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/)
+- **Icons**: [Lucide React](https://lucide.dev/) + [MUI Icons](https://mui.com/material-ui/material-icons/)
+- **Charts**: [Recharts](https://recharts.org/)
+- **Auth**: [Firebase Authentication](https://firebase.google.com/docs/auth)
+- **Toast Notifications**: [Sonner](https://sonner.emilkowal.ski/)
 
-### Prerequisites
+---
 
-- Node.js (v18 or higher)
-- npm or yarn
+## 🏗️ Getting Started (Frontend Setup)
 
-### Installation
+### 1. Prerequisites
+- [Node.js](https://nodejs.org/) (v18+)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 
+### 2. Installation
 1. Clone the repository:
-```bash
-git clone <YOUR_GIT_URL>
-cd lifepathbot-frontend
-```
-
+   ```bash
+   git clone https://github.com/AI-Mercenary/lifepath-bot-frontend.git
+   cd lifepath-bot-frontend
+   ```
 2. Install dependencies:
-```bash
-npm install
-```
-
-3. Set up environment variables:
-   - Create a `.env` file in the root directory
-   - Add your Gemini API key:
+   ```bash
+   npm install
    ```
-   VITE_GEMINI_API_KEY=your_gemini_api_key_here
+3. Set up environment variables (.env):
+   ```env
+   VITE_FIREBASE_API_KEY=your_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_domain
+   VITE_FIREBASE_PROJECT_ID=your_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_bucket
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+   VITE_API_URL=http://localhost:5000/api
    ```
-   - Get your API key from: https://makersuite.google.com/app/apikey
-
 4. Start the development server:
-```bash
-npm run dev
-```
+   ```bash
+   npm run dev
+   ```
+   The application will be available at `http://localhost:8080`.
 
-The application will be available at `http://localhost:8080`
+---
 
-## Available Scripts
+## 🔗 Connection to Backend
+Ensure your backend is running at `http://localhost:5000` and Ollama is running `llama3.2:1b` for the full chat experience.
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
+---
 
-## Project Structure
-
+## 📜 Project Structure
 ```
 src/
-├── components/     # Reusable UI components
-├── context/        # React context for state management
-├── hooks/          # Custom React hooks
-├── lib/            # Utility functions and API integrations
-├── pages/          # Page components
-└── App.tsx         # Main application component
+├── api/          # Axios wrappers for backend routes
+├── components/   # Reusable UI components (shadcn/ui)
+├── context/      # App context (User, Goals, Reflections)
+├── lib/          # Utilities, LLM types, and detectIntent logic
+├── pages/        # Main route pages (Dashboard, Chat, Goals, Auth)
+└── App.tsx       # Main component routing
 ```
 
-## Backend Integration
+---
 
-This frontend is designed to work with a MongoDB backend. See the API documentation for the required endpoints.
-
-## License
-
+## 📄 License
 MIT
