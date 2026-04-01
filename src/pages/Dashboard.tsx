@@ -15,6 +15,7 @@ import {
   Menu,
   GraduationCap,
   LogOut,
+  ShieldAlert,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import MoodWidget from "@/components/dashboard/MoodWidget";
@@ -65,6 +66,16 @@ const Dashboard = () => {
               )}
             </div>
             <div className="flex items-center space-x-2">
+              {user?.role === "admin" && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/admin")}
+                  className="mr-2 gap-2 text-primary border-primary hover:bg-primary/10"
+                >
+                  <ShieldAlert className="w-4 h-4" />
+                  Admin Portal
+                </Button>
+              )}
               <ThemeToggle />
               <Button
                 variant="ghost"

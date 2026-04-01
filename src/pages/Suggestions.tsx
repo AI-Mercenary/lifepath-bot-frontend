@@ -7,16 +7,17 @@ import { Search, ThumbsUp, MessageSquare, Lightbulb, Filter, Plus } from "lucide
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { toast } from "sonner";
+import { getSuggestions } from "@/api/suggestions";
 
 interface Suggestion {
     id: string;
     title: string;
     description: string;
-    category: "campus" | "academic" | "events" | "facilities";
+    category: "hackathons" | "academics" | "courses" | "internships" | "careers" | "projects" | "tips & tricks" | "general" | string;
     author: string;
     date: string;
     votes: number;
-    status: "approved" | "pending" | "implemented";
+    status: "approved" | "pending" | "rejected";
 }
 
 const MOCK_SUGGESTIONS: Suggestion[] = [
@@ -52,12 +53,41 @@ const MOCK_SUGGESTIONS: Suggestion[] = [
     }
 ];
 
+const CATEGORIES = ["all", "hackathons", "academics", "courses", "internships", "careers", "projects", "tips & tricks", "general"];
+
 const Suggestions = () => {
     const navigate = useNavigate();
     const { user } = useApp();
-    const [suggestions, setSuggestions] = useState<Suggestion[]>(MOCK_SUGGESTIONS);
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [filter, setFilter] = useState<string>("all");
+    const [loading, setLoading] = useState(true);
+
+    React.useEffect(() => {
+        const fetchSuggestions = async () => {
+            try {
+                const data = await getSuggestions();
+                const mapped = data.map((item: any) => ({
+                    id: item._id,
+                    title: item.title,
+                    description: item.description,
+                    category: item.category?.toLowerCase() || "general",
+                    author: item.authorName || "Anonymous",
+                    date: new Date(item.createdAt).toLocaleDateString(),
+                    votes: item.upvotes || 0,
+                    status: item.status
+                }));
+                // Filter to only show approved for public view? Or all if we want.
+                setSuggestions(mapped);
+            } catch (error) {
+                console.error("Failed to load suggestions:", error);
+                toast.error("Failed to load suggestions");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSuggestions();
+    }, []);
 
     const handleVote = (id: string) => {
         setSuggestions(suggestions.map(s =>
@@ -100,13 +130,13 @@ const Suggestions = () => {
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                    {["all", "campus", "academic", "events", "facilities"].map((cat) => (
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {CATEGORIES.map((cat) => (
                         <Button
                             key={cat}
                             variant={filter === cat ? "default" : "outline"}
                             onClick={() => setFilter(cat)}
-                            className="capitalize"
+                            className="capitalize whitespace-nowrap"
                         >
                             {cat}
                         </Button>

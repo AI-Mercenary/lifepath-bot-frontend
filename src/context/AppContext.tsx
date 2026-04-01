@@ -3,6 +3,8 @@ import { signInWithPopup, signOut, signInWithEmailAndPassword, createUserWithEma
 import { auth, googleProvider } from "@/config/firebase";
 import { toast } from "sonner";
 import { syncUserToBackend } from "@/api/users";
+import { createGoal, updateGoal as apiUpdateGoal, deleteGoal as apiDeleteGoal, getGoals } from '@/api/goals';
+import { createReflection, getReflections } from '@/api/reflections';
 
 interface User {
   id: string;
@@ -147,6 +149,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             role: newUser.role
         }).catch(err => console.error("Auto-sync failed", err));
 
+        // Fetch Goals and Reflections
+        getGoals(newUser.id).then(data => {
+            const mappedGoals = data.map((g: any) => ({ ...g, id: g._id }));
+            if (mappedGoals.length > 0) setGoals(mappedGoals);
+        }).catch(err => console.error(err));
+
+        getReflections(newUser.id).then(data => {
+            const mappedReflections = data.map((r: any) => ({ ...r, id: r._id }));
+            if (mappedReflections.length > 0) setReflections(mappedReflections);
+        }).catch(err => console.error(err));
+
       } else {
         setUser(null);
       }
@@ -186,11 +199,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     // Static Admin Check
-    if (email === "lifepathbot@admin.in" && password === "qwerty123") {
+    if (email === "admin@gitam.in" && password === "admin") {
       const adminUser: User = {
         id: "admin-static",
         name: "Admin",
-        email: "lifepathbot@admin.in",
+        email: "admin@gitam.in",
         role: "admin",
         branch: "Administration",
         year: "Staff",
@@ -211,9 +224,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       await signInWithEmailAndPassword(auth, email, password);
       // Auth state listener will update user
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error", error);
-      toast.error("Invalid email or password");
+      if (error.code === "auth/invalid-credential") {
+        toast.error("Invalid email or password");
+      } else if (error.code === "auth/user-disabled") {
+        toast.error("This account has been disabled");
+      } else {
+        toast.error("An error occurred during login. Please try again.");
+      }
       return false;
     }
   };
@@ -313,9 +332,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Google Sign In Error", error);
-      toast.error("Failed to sign in. Please try again.");
+      if (error.code === "auth/unauthorized-domain") {
+        toast.error(`Domain mismatch. Please add ${window.location.hostname} to authorized domains in Firebase Console.`);
+      } else if (error.code === "auth/popup-closed-by-user") {
+        // Silently handle popup closure
+      } else {
+        toast.error("Failed to sign in. Please try again.");
+      }
       return false;
     }
   };
@@ -345,16 +370,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       isCompleted: false,
     };
     setGoals([...goals, newGoal]);
+    
+    if (user?.id) { createGoal({...newGoal, firebaseUid: user.id}).catch(console.error); }
     return newGoal.id;
   };
 
   const updateGoal = (id: string, updates: Partial<Goal>) => {
-    setGoals(goals.map((g) => (g.id === id ? { ...g, ...updates } : g)));
+    const freshGoals = goals.map((g) => (g.id === id ? { ...g, ...updates } : g));
+    setGoals(freshGoals);
+    
+    const targetGoal = freshGoals.find(g => g.id === id);
+    if (user?.id && targetGoal && !id.includes(Date.now().toString().substring(0, 5))) {
+        // Only update backend if id is from mongo (not optimistic local id)
+        apiUpdateGoal(id, updates).catch(console.error);
+    }
   };
 
   const deleteGoal = (id: string) => {
     setGoals(goals.filter((g) => g.id !== id));
     setTasks(tasks.filter((t) => t.goalId !== id));
+    if (user?.id) { apiDeleteGoal(id).catch(console.error); }
   };
 
   const addTask = (taskData: Omit<Task, "id" | "createdAt">): string => {
@@ -382,6 +417,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       createdAt: new Date().toISOString(),
     };
     setReflections([...reflections, newReflection]);
+    if (user?.id) { createReflection({...newReflection, firebaseUid: user.id}).catch(console.error); }
     return newReflection.id;
   };
 

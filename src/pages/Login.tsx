@@ -24,7 +24,11 @@ const Login = () => {
       const success = await login(email, password);
       if (success) {
         toast.success("Welcome back! 🎉");
-        navigate("/dashboard");
+        if (email === "admin@gitam.in") {
+           navigate("/admin");
+        } else {
+           navigate("/dashboard");
+        }
       } else {
         toast.error("Invalid email or password");
       }
@@ -64,6 +68,7 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               className="h-11"
             />
           </div>
@@ -78,6 +83,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="current-password"
                 className="h-11 pr-10"
               />
               <button

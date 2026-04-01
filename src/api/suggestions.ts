@@ -40,3 +40,8 @@ export const createSuggestion = async (data: {
   const response = await api.post('/suggestions', data);
   return response.data;
 };
+
+export const bulkCreateSuggestions = async (suggestions: any[]) => {
+  const response = await api.post('/suggestions/bulk', suggestions);
+  return response.data;
+};

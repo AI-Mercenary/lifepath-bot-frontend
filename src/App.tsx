@@ -94,7 +94,6 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <AppRoutes />
-              <RoleSwitcher />
             </BrowserRouter>
           </TooltipProvider>
         </ThemeWrapper>

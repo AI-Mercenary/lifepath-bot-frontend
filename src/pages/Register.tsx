@@ -103,6 +103,7 @@ const Register = () => {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
+              autoComplete="email"
               className="h-11"
             />
           </div>
@@ -147,6 +148,7 @@ const Register = () => {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
+                autoComplete="new-password"
                 className="h-11 pr-10"
               />
               <button
@@ -168,6 +170,7 @@ const Register = () => {
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               required
+              autoComplete="new-password"
               className="h-11"
             />
           </div>
