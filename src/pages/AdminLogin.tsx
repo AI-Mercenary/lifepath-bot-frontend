@@ -18,17 +18,16 @@ const AdminLogin = () => {
         e.preventDefault();
         setIsLoading(true);
 
-        const success = await login(email, password);
+        const { success, role } = await login(email, password);
         
         if (success) {
-             // The login function in AppContext handles the routing/toast for success if needed, 
-             // but here we might want to ensure they are actually an admin.
-             // Since login() returns true, we can check the user role or just navigate.
-             // However, login updates state asynchronously. 
-             // Ideally we navigate after check.
-             
-             // For static admin, we know it redirects or we should redirect.
-             navigate("/admin");
+             // For static admin or real admin, we navigate to the admin page.
+             // If a normal student accidentally uses admin login, we could bounce them to dashboard here too:
+             if (role === "admin") {
+                 navigate("/admin");
+             } else {
+                 navigate("/dashboard");
+             }
         } 
         
         setIsLoading(false);

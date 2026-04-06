@@ -81,7 +81,7 @@ interface AppContextType {
   chatHistory: ChatMessage[];
   isAuthenticated: boolean;
   examMode: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{success: boolean, role?: string}>;
   register: (data: { name: string; email: string; password: string; branch: string; year: string }) => Promise<boolean>;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
@@ -101,7 +101,7 @@ interface AppContextType {
   toggleExamMode: () => void;
   toggleExamMode: () => void;
   exportData: () => string;
-  loginWithGoogle: () => Promise<boolean>;
+  loginWithGoogle: () => Promise<{success: boolean, role?: string}>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -123,11 +123,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser: FirebaseUser | null) => {
       if (fbUser) {
         // Map Firebase user to our App User
+        // Quick check for known admin emails to prevent immediate routing bounce
+        let initialRole: "student" | "admin" | "verified" = "student";
+        if (fbUser.email === "admin@gitam.in" || fbUser.email?.includes("admin")) {
+            initialRole = "admin";
+        }
+
         const newUser: User = {
           id: fbUser.uid,
           name: fbUser.displayName || "User",
           email: fbUser.email || "",
-          role: "student", // Default
+          role: initialRole,
           branch: "General", // Placeholder, ideally fetch from Firestore
           year: "1", // Placeholder
           preferences: {
@@ -137,16 +143,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             examMode: false,
           },
         };
-        // In a real app, we would fetch additional user data (branch, year, preferences) from Firestore here.
-        // For now, we simple sync what we have.
         setUser((prev) => (prev ? { ...prev, ...newUser } : newUser));
         
-        // Sync to backend on auto-login too, to ensure DB is consistent
+        // Sync to backend on auto-login and fetch authoritative DB role
         syncUserToBackend({
             firebaseUid: newUser.id,
             email: newUser.email,
-            name: newUser.name,
-            role: newUser.role
+            name: newUser.name
+            // We omit 'role' here so backend doesn't accidentally downgrade existing admins
+        }).then((dbUser) => {
+            if (dbUser && dbUser.role) {
+                setUser((prev) => prev ? { ...prev, role: dbUser.role } : null);
+            }
         }).catch(err => console.error("Auto-sync failed", err));
 
         // Fetch Goals and Reflections
@@ -197,7 +205,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("examMode", JSON.stringify(examMode));
   }, [examMode]);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{success: boolean, role?: string}> => {
     // Static Admin Check
     if (email === "admin@gitam.in" && password === "admin") {
       const adminUser: User = {
@@ -217,13 +225,38 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setUser(adminUser);
       localStorage.setItem("user", JSON.stringify(adminUser));
       toast.success("Welcome, Admin");
-      return true;
+      return { success: true, role: "admin" };
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // Auth state listener will update user
-      return true;
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      let finalRole = "student";
+      if (result.user) {
+          try {
+              const dbUser = await syncUserToBackend({
+                  firebaseUid: result.user.uid,
+                  email: result.user.email || "",
+                  name: result.user.displayName || "User"
+              });
+              
+              if (dbUser && dbUser.role) {
+                  finalRole = dbUser.role;
+                  const tempUser: User = {
+                    id: result.user.uid,
+                    name: result.user.displayName || "User",
+                    email: result.user.email || "",
+                    role: dbUser.role,
+                    branch: "General",
+                    year: "1",
+                    preferences: { notifications: "app", wakeTime: "07:00", sleepTime: "23:00", examMode: false },
+                  };
+                  setUser((prev) => prev ? { ...prev, role: dbUser.role } : tempUser);
+              }
+          } catch (e) {
+              console.error("Login backend sync failed", e);
+          }
+      }
+      return { success: true, role: finalRole };
     } catch (error: any) {
       console.error("Login error", error);
       if (error.code === "auth/invalid-credential") {
@@ -233,7 +266,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       } else {
         toast.error("An error occurred during login. Please try again.");
       }
-      return false;
+      return { success: false };
     }
   };
 
@@ -279,7 +312,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("user");
   };
 
-  const loginWithGoogle = async (): Promise<boolean> => {
+  const loginWithGoogle = async (): Promise<{success: boolean, role?: string}> => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const fbUser = result.user;
@@ -295,7 +328,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (!isValidDomain && !isAdmin) {
         await signOut(auth); // Sign out immediately
         toast.error("Please use your GITAM email (@gitam.student.edu or @gitam.in)");
-        return false;
+        return { success: false };
+      }
+
+      let initialRole: "student" | "admin" | "verified" = "student";
+      if (isAdmin || email === "admin@gitam.in") {
+          initialRole = "admin";
       }
 
       // Map Firebase user to our App User
@@ -303,7 +341,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         id: fbUser.uid,
         name: fbUser.displayName || "User",
         email: email,
-        role: "student", // Default
+        role: initialRole,
         branch: "General", // Default/Placeholder
         year: "1", // Default/Placeholder
         preferences: {
@@ -321,17 +359,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       
       // Sync to Backend
       try {
-          await syncUserToBackend({
+          const dbUser = await syncUserToBackend({
               firebaseUid: newUser.id,
               email: newUser.email,
-              name: newUser.name,
-              role: newUser.role
+              name: newUser.name
+              // omit role to avoid overwriting existing
           });
+          if (dbUser && dbUser.role) {
+              newUser.role = dbUser.role;
+              setUser({...newUser});
+              localStorage.setItem("user", JSON.stringify({...newUser}));
+          }
       } catch (err) {
           console.error("Failed to sync user to backend", err);
       }
 
-      return true;
+      return { success: true, role: newUser.role };
     } catch (error: any) {
       console.error("Google Sign In Error", error);
       if (error.code === "auth/unauthorized-domain") {
@@ -341,7 +384,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       } else {
         toast.error("Failed to sign in. Please try again.");
       }
-      return false;
+      return { success: false };
     }
   };
 

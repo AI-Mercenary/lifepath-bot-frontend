@@ -6,10 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, UserCheck, ShieldAlert, Lightbulb, Upload, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
-import Papa from 'papaparse';
 import { bulkCreateSuggestions } from "@/api/suggestions";
 import { getAllChatHistory } from "@/api/chat";
+import { getAllUsers } from "@/api/users";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -19,6 +20,7 @@ const AdminDashboard = () => {
     const [pendingContent, setPendingContent] = useState<any[]>([]);
     const [pendingSuggestions, setPendingSuggestions] = useState<any[]>([]);
     const [allChats, setAllChats] = useState<any[]>([]);
+    const [allUsers, setAllUsers] = useState<any[]>([]);
 
     useEffect(() => {
         // Fetch pending suggestions on mount
@@ -52,8 +54,18 @@ const AdminDashboard = () => {
              }
         };
 
+        const fetchAllUsers = async () => {
+             try {
+                 const users = await getAllUsers();
+                 setAllUsers(users);
+             } catch (error) {
+                 console.error("Failed to fetch users", error);
+             }
+        };
+
         fetchPending();
         fetchAllChats();
+        fetchAllUsers();
     }, []);
 
     // const handleApproveUser = (id: number) => { ... }
@@ -61,34 +73,54 @@ const AdminDashboard = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        Papa.parse(file, {
-            header: true,
-            skipEmptyLines: true,
-            complete: async (results) => {
-                try {
-                    const formattedData = results.data
-                        .filter((row: any) => row['Name'] && row['What type of guidance do you want to give right now for the students / your fellow peers'])
-                        .map((row: any) => ({
-                            authorName: row['Name'],
-                            category: row['What type of guidance do you want to give right now for the students / your fellow peers'],
-                            title: row['Your detailed suggestion / guidance']?.substring(0, 40) + '...' || "Suggestion Session",
-                            description: row['Your detailed suggestion / guidance'],
-                            tags: [row['Primary Domain / Specialization you are interested in'], row['Department']].filter(Boolean)
-                        }));
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = event.target?.result;
+                const workbook = XLSX.read(data, { type: 'binary' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const results: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-                    if (formattedData.length > 0) {
-                        await bulkCreateSuggestions(formattedData);
-                        toast.success(`Successfully uploaded ${formattedData.length} suggestions!`);
-                        // Could refetch here, but bulk uploads go straight to approved, so they won't show in the pending UI.
-                    } else {
-                        toast.warning("No valid suggestions found in CSV.");
-                    }
-                } catch (error) {
-                    console.error("Bulk upload error", error);
-                    toast.error("Failed to upload suggestions");
+                const formattedData = results
+                    .map((row: any) => {
+                        // Loose matching: find columns that sound right, or use fallbacks
+                        const keys = Object.keys(row);
+                        const nameKey = keys.find(k => k.toLowerCase().includes('name') || k.toLowerCase().includes('author')) || keys[0];
+                        // Prefer the "What type..." question for category logic if it exists, else domain
+                        const catKey = keys.find(k => k.toLowerCase().includes('type of guidance') || k.toLowerCase().includes('domain') || k.toLowerCase().includes('category')) || keys[1];
+                        // Prefer "detailed" or "suggestion" over just "guidance"
+                        const descKey = keys.find(k => k.toLowerCase().includes('detailed') || k.toLowerCase().includes('suggestion') || k.toLowerCase().includes('guidance')) || keys[2];
+                        
+                        // Only add if we have some sort of description/suggestion text
+                        if (!row[descKey]) return null;
+
+                        return {
+                            authorName: row[nameKey] || "Anonymous",
+                            category: row[catKey]?.substring(0, 50) || "General",
+                            title: String(row[descKey]).substring(0, 40) + '...' || "Suggestion Session",
+                            description: String(row[descKey]),
+                            tags: ["Bulk"]
+                        };
+                    }).filter(Boolean);
+
+                if (formattedData.length > 0) {
+                    await bulkCreateSuggestions(formattedData);
+                    toast.success(`Successfully uploaded ${formattedData.length} suggestions!`);
+                    // Reload pending
+                    const raw = await getSuggestions(undefined, 'pending');
+                    setPendingSuggestions(raw.map((item: any) => ({
+                        id: item._id, title: item.title, category: item.category, author: item.authorName, date: new Date(item.createdAt).toLocaleDateString()
+                    })));
+                } else {
+                    toast.warning("No valid suggestions found in file.");
                 }
+            } catch (error) {
+                console.error("Bulk upload error", error);
+                toast.error("Failed to parse file.");
             }
-        });
+        };
+        reader.readAsBinaryString(file);
     };
 
     const handleApproveContent = (id: number) => {
@@ -128,17 +160,59 @@ const AdminDashboard = () => {
                     <h1 className="text-3xl font-bold tracking-tight mb-2">Admin Dashboard</h1>
                     <p className="text-muted-foreground">Manage user verifications, content moderation, and suggestions.</p>
                 </div>
-                <Button variant="outline" onClick={() => navigate("/dashboard")}>
-                    ← Back to User Dashboard
+                <Button variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => {
+                    localStorage.removeItem("user");
+                    window.location.href = "/login";
+                }}>
+                    Admin Logout
                 </Button>
             </div>
 
             <Tabs defaultValue="suggestions" className="space-y-6" onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
+                <TabsList className="grid w-full grid-cols-4 lg:w-[800px]">
+                    <TabsTrigger value="users">Users</TabsTrigger>
                     <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
                     <TabsTrigger value="content">Content Moderation</TabsTrigger>
                     <TabsTrigger value="chats">User Chat Logs</TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="users" className="space-y-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <UserCheck className="h-5 w-5" />
+                                User Management
+                            </CardTitle>
+                            <CardDescription>View all {allUsers.length} registered accounts and profiles on LifePathBot.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <div className="space-y-4 max-h-[600px] overflow-auto pr-4">
+                                {allUsers.length === 0 ? <p className="text-muted-foreground text-center py-8">No users found.</p> : 
+                                  allUsers.map((u: any) => (
+                                     <div key={u._id} className="p-4 border rounded-lg bg-card/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                         <div>
+                                             <div className="flex gap-2 items-center mb-1">
+                                                <h4 className="font-semibold">{u.name}</h4>
+                                                <Badge variant={u.role === 'admin' ? 'destructive' : u.role === 'verified' ? 'default' : 'secondary'}>{u.role.toUpperCase()}</Badge>
+                                             </div>
+                                             <p className="text-sm text-muted-foreground">{u.email}</p>
+                                             {(u.dept || u.student_id) && (
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    {u.student_id ? `ID: ${u.student_id}` : ''} {u.dept ? `| Dept: ${u.dept}` : ''}
+                                                </p>
+                                             )}
+                                         </div>
+                                         <div className="text-sm text-right">
+                                             <div className="text-muted-foreground mb-1">Joined</div>
+                                             <div className="font-medium">{new Date(u.createdAt).toLocaleDateString()}</div>
+                                         </div>
+                                     </div>
+                                  ))
+                                }
+                             </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
 
                 <TabsContent value="chats" className="space-y-4">
                     <Card>
@@ -232,13 +306,13 @@ const AdminDashboard = () => {
                                 <div className="relative">
                                     <input 
                                         type="file" 
-                                        accept=".csv" 
+                                        accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" 
                                         onChange={handleFileUpload} 
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                     />
                                     <Button variant="outline" className="gap-2 pointer-events-none">
                                         <Upload className="h-4 w-4" />
-                                        Upload CSV
+                                        Upload File
                                     </Button>
                                 </div>
                             </div>

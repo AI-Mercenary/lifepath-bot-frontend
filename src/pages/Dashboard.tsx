@@ -234,7 +234,7 @@ const Dashboard = () => {
                 <MessageCircle className="w-5 h-5 mr-3 text-primary" />
                 <div className="text-left">
                   <div className="font-semibold">Community Hub</div>
-                  <div className="text-xs text-muted-foreground">Discussions & updates</div>
+                  <div className="text-xs text-muted-foreground">Suggestions & voting</div>
                 </div>
               </Button>
             </div>

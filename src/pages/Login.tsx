@@ -21,10 +21,10 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const success = await login(email, password);
+      const { success, role } = await login(email, password);
       if (success) {
         toast.success("Welcome back! 🎉");
-        if (email === "admin@gitam.in") {
+        if (role === "admin") {
            navigate("/admin");
         } else {
            navigate("/dashboard");
@@ -40,10 +40,14 @@ const Login = () => {
   };
 
   const handleGoogleLogin = async () => {
-    const success = await loginWithGoogle();
+    const { success, role } = await loginWithGoogle();
     if (success) {
       toast.success("Welcome back! 🎉");
-      navigate("/dashboard");
+      if (role === "admin") {
+         navigate("/admin");
+      } else {
+         navigate("/dashboard");
+      }
     }
   };
 

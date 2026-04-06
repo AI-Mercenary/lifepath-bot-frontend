@@ -3,17 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, ThumbsUp, MessageSquare, Lightbulb, Filter, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { toast } from "sonner";
-import { getSuggestions } from "@/api/suggestions";
+import { getSuggestions, createSuggestion } from "@/api/suggestions";
 
 interface Suggestion {
     id: string;
     title: string;
     description: string;
-    category: "hackathons" | "academics" | "courses" | "internships" | "careers" | "projects" | "tips & tricks" | "general" | string;
+    category: "Hackathons" | "Placements" | "Academics" | "Courses" | "Internships" | "Projects" | string;
     author: string;
     date: string;
     votes: number;
@@ -53,41 +57,81 @@ const MOCK_SUGGESTIONS: Suggestion[] = [
     }
 ];
 
-const CATEGORIES = ["all", "hackathons", "academics", "courses", "internships", "careers", "projects", "tips & tricks", "general"];
+const CATEGORIES = ["All", "Hackathons", "Placements", "Academics", "Internships", "Courses", "Projects"];
 
 const Suggestions = () => {
     const navigate = useNavigate();
     const { user } = useApp();
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
-    const [filter, setFilter] = useState<string>("all");
+    const [filter, setFilter] = useState<string>("All");
     const [loading, setLoading] = useState(true);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [newSuggestion, setNewSuggestion] = useState({ title: "", description: "", category: "Academics", tags: "" });
+
+    const formatCategory = (cat: string, title?: string, desc?: string) => {
+        const textToSearch = ((cat || "") + " " + (title || "") + " " + (desc || "")).toLowerCase();
+        
+        if (textToSearch.includes("hackathon")) return "Hackathons";
+        if (textToSearch.includes("internship")) return "Internships";
+        if (textToSearch.includes("placement") || textToSearch.includes("career")) return "Placements";
+        if (textToSearch.includes("course") || textToSearch.includes("certif")) return "Courses";
+        if (textToSearch.includes("project")) return "Projects";
+
+        if (!cat) return "Academics";
+        const formatted = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
+        const validCategories = ["Hackathons", "Placements", "Academics", "Internships", "Courses", "Projects"];
+        if (validCategories.includes(formatted)) return formatted;
+        
+        return "Academics";
+    };
+
+    const fetchSuggestions = async () => {
+        try {
+            const data = await getSuggestions();
+            const mapped = data.map((item: any) => ({
+                id: item._id,
+                title: item.title,
+                description: item.description,
+                category: formatCategory(item.category, item.title, item.description),
+                author: item.authorName || "Anonymous",
+                date: new Date(item.createdAt).toLocaleDateString(),
+                votes: item.upvotes || 0,
+                status: item.status
+            }));
+            setSuggestions(mapped);
+        } catch (error) {
+            console.error("Failed to load suggestions:", error);
+            toast.error("Failed to load suggestions");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     React.useEffect(() => {
-        const fetchSuggestions = async () => {
-            try {
-                const data = await getSuggestions();
-                const mapped = data.map((item: any) => ({
-                    id: item._id,
-                    title: item.title,
-                    description: item.description,
-                    category: item.category?.toLowerCase() || "general",
-                    author: item.authorName || "Anonymous",
-                    date: new Date(item.createdAt).toLocaleDateString(),
-                    votes: item.upvotes || 0,
-                    status: item.status
-                }));
-                // Filter to only show approved for public view? Or all if we want.
-                setSuggestions(mapped);
-            } catch (error) {
-                console.error("Failed to load suggestions:", error);
-                toast.error("Failed to load suggestions");
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchSuggestions();
     }, []);
+
+    const handleSubmit = async () => {
+        if (!newSuggestion.title || !newSuggestion.description) return toast.error("Please fill in title and description");
+        if (!user) return toast.error("You must be logged in");
+
+        try {
+            await createSuggestion({
+                firebaseUid: user.id,
+                title: newSuggestion.title,
+                description: newSuggestion.description,
+                category: newSuggestion.category,
+                tags: newSuggestion.tags.split(",").map(t => t.trim()).filter(Boolean)
+            });
+            toast.success("Suggestion submitted for review!");
+            setNewSuggestion({ title: "", description: "", category: "Academics", tags: "" });
+            setIsDialogOpen(false);
+            fetchSuggestions();
+        } catch (error) {
+            toast.error("Failed to post suggestion");
+        }
+    };
 
     const handleVote = (id: string) => {
         setSuggestions(suggestions.map(s =>
@@ -99,7 +143,7 @@ const Suggestions = () => {
     const filteredSuggestions = suggestions.filter(s => {
         const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             s.description.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesFilter = filter === "all" || s.category === filter;
+        const matchesFilter = filter === "All" || s.category === filter;
         return matchesSearch && matchesFilter;
     });
 
@@ -107,17 +151,53 @@ const Suggestions = () => {
         <div className="container mx-auto p-6 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight mb-2">Campus Suggestions</h1>
+                    <h1 className="text-3xl font-bold tracking-tight mb-2">Community Hub</h1>
                     <p className="text-muted-foreground">
-                        Voice your ideas and vote on improvements for our community.
+                        Explore, vote, and submit new suggestions based on different topics.
                     </p>
                 </div>
-                {(user?.role === "verified" || user?.role === "admin") && (
-                    <Button onClick={() => navigate("/verified-upload")} className="bg-gradient-hero text-primary-foreground shadow-lg hover:shadow-xl transition-all">
+                
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-gradient-hero text-primary-foreground shadow-lg hover:shadow-xl transition-all">
                         <Plus className="mr-2 h-4 w-4" />
                         Submit Suggestion
                     </Button>
-                )}
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[600px]">
+                    <DialogHeader>
+                      <DialogTitle>Suggest an Idea</DialogTitle>
+                      <DialogDescription>Share your suggestion for the community</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-3">
+                        <div className="space-y-1">
+                            <Label>Suggestion Title</Label>
+                            <Input placeholder="What is your idea?" value={newSuggestion.title} onChange={e => setNewSuggestion({...newSuggestion, title: e.target.value})} />
+                        </div>
+                        <div className="space-y-1">
+                            <Label>Topic</Label>
+                            <Select value={newSuggestion.category} onValueChange={(val) => setNewSuggestion({...newSuggestion, category: val})}>
+                               <SelectTrigger><SelectValue/></SelectTrigger>
+                               <SelectContent>
+                                   {CATEGORIES.filter(c => c !== "All").map(c => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}
+                               </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-1">
+                            <Label>Details</Label>
+                            <Textarea rows={4} placeholder="Provide context..." value={newSuggestion.description} onChange={e => setNewSuggestion({...newSuggestion, description: e.target.value})} />
+                        </div>
+                        <div className="space-y-1">
+                            <Label>Tags (Comma separated)</Label>
+                            <Input placeholder="e.g. WiFi, Campus" value={newSuggestion.tags} onChange={e => setNewSuggestion({...newSuggestion, tags: e.target.value})} />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSubmit} className="bg-gradient-hero text-white">Submit</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
             </div>
 
             <div className="flex flex-col md:flex-row gap-4 mb-8">
