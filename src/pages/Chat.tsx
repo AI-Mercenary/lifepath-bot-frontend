@@ -65,7 +65,7 @@ const Chat = () => {
   useEffect(() => {
     const welcomeMessage = {
       id: "welcome",
-      text: `Hi${user ? ` ${user.name}` : ""}! I'm your LifePathBot. Your local Llama model is ready to assist with your journey.`,
+      text: `Hi${user ? ` ${user.name}` : ""}! I'm your LifePathBot. Your AI assistant is ready to help you with your journey.`,
       sender: "bot" as const,
       timestamp: new Date(),
     };
@@ -219,7 +219,7 @@ const Chat = () => {
 
     } catch (error) {
       console.error("Chat error:", error);
-      toast.error("Local LLM connection failed. Ensure Ollama is running.");
+      toast.error("AI connection failed. Please check your internet or try again later.");
     } finally {
       setLoading(false);
     }
