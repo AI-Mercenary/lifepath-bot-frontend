@@ -84,15 +84,16 @@ const AdminDashboard = () => {
 
                 const formattedData = results
                     .map((row: any) => {
-                        // Loose matching: find columns that sound right, or use fallbacks
                         const keys = Object.keys(row);
-                        const nameKey = keys.find(k => k.toLowerCase().includes('name') || k.toLowerCase().includes('author')) || keys[0];
-                        const catKey = keys.find(k => k.toLowerCase().includes('type of guidance') || k.toLowerCase().includes('domain') || k.toLowerCase().includes('category')) || keys[1];
-                        const descKey = keys.find(k => k.toLowerCase().includes('detailed') || k.toLowerCase().includes('suggestion') || k.toLowerCase().includes('guidance')) || keys[2];
-                        const branchKey = keys.find(k => k.toLowerCase().includes('branch') || k.toLowerCase().includes('dept') || k.toLowerCase().includes('student_id')) || '';
-                        const yearKey = keys.find(k => k.toLowerCase().includes('year')) || '';
                         
-                        // Only add if we have some sort of description/suggestion text
+                        // Strict parsing based on provided CSV structure
+                        const nameKey = keys.find(k => k.toLowerCase().trim() === 'name') || keys.find(k => k.toLowerCase().includes('name')) || keys[0];
+                        const catKey = keys.find(k => k.toLowerCase().includes('type of guidance')) || keys.find(k => k.toLowerCase().includes('domain')) || keys[1];
+                        const descKey = keys.find(k => k.toLowerCase().includes('detailed suggestion') || k.toLowerCase().includes('detailed')) || keys.find(k => k.toLowerCase().includes('suggestion')) || keys[2];
+                        const branchKey = keys.find(k => k.toLowerCase().includes('department') || k.toLowerCase().includes('branch') || k.toLowerCase().includes('dept')) || '';
+                        const yearKey = keys.find(k => k.toLowerCase().includes('year of study') || k.toLowerCase().includes('year')) || '';
+
+                        // Only add if we have the suggestion content
                         if (!row[descKey]) return null;
 
                         return {
@@ -100,9 +101,9 @@ const AdminDashboard = () => {
                             branch: row[branchKey] || "General",
                             year: row[yearKey] || "1",
                             category: row[catKey]?.substring(0, 50) || "General",
-                            title: String(row[descKey]).substring(0, 40) + '...' || "Suggestion Session",
+                            title: String(row[descKey]).substring(0, 40) + '...',
                             description: String(row[descKey]),
-                            tags: ["Bulk"]
+                            tags: ["Bulk Upload"]
                         };
                     }).filter(Boolean);
 
