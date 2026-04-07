@@ -147,10 +147,17 @@ const Suggestions = () => {
         }
     };
 
+    const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
+
     const handleVote = (id: string) => {
+        if (votedIds.has(id)) {
+            return toast.error("You have already voted for this suggestion.");
+        }
+        
         setSuggestions(suggestions.map(s =>
             s.id === id ? { ...s, votes: s.votes + 1 } : s
         ));
+        setVotedIds(prev => new Set(prev).add(id));
         toast.success("Vote recorded!");
     };
 
