@@ -87,16 +87,18 @@ const AdminDashboard = () => {
                         // Loose matching: find columns that sound right, or use fallbacks
                         const keys = Object.keys(row);
                         const nameKey = keys.find(k => k.toLowerCase().includes('name') || k.toLowerCase().includes('author')) || keys[0];
-                        // Prefer the "What type..." question for category logic if it exists, else domain
                         const catKey = keys.find(k => k.toLowerCase().includes('type of guidance') || k.toLowerCase().includes('domain') || k.toLowerCase().includes('category')) || keys[1];
-                        // Prefer "detailed" or "suggestion" over just "guidance"
                         const descKey = keys.find(k => k.toLowerCase().includes('detailed') || k.toLowerCase().includes('suggestion') || k.toLowerCase().includes('guidance')) || keys[2];
+                        const branchKey = keys.find(k => k.toLowerCase().includes('branch') || k.toLowerCase().includes('dept') || k.toLowerCase().includes('student_id')) || '';
+                        const yearKey = keys.find(k => k.toLowerCase().includes('year')) || '';
                         
                         // Only add if we have some sort of description/suggestion text
                         if (!row[descKey]) return null;
 
                         return {
                             authorName: row[nameKey] || "Anonymous",
+                            branch: row[branchKey] || "General",
+                            year: row[yearKey] || "1",
                             category: row[catKey]?.substring(0, 50) || "General",
                             title: String(row[descKey]).substring(0, 40) + '...' || "Suggestion Session",
                             description: String(row[descKey]),

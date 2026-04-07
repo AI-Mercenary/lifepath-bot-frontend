@@ -19,6 +19,8 @@ interface Suggestion {
     description: string;
     category: "Hackathons" | "Placements" | "Academics" | "Courses" | "Internships" | "Projects" | string;
     author: string;
+    branch?: string;
+    year?: string;
     date: string;
     votes: number;
     status: "approved" | "pending" | "rejected";
@@ -95,6 +97,8 @@ const Suggestions = () => {
                 description: item.description,
                 category: formatCategory(item.category, item.title, item.description),
                 author: item.authorName || "Anonymous",
+                branch: item.branch || "General",
+                year: item.year || "1",
                 date: new Date(item.createdAt).toLocaleDateString(),
                 votes: item.upvotes || 0,
                 status: item.status
@@ -247,8 +251,11 @@ const Suggestions = () => {
                         </CardHeader>
                         <CardContent>
                             <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-medium text-foreground">{suggestion.author}</span>
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-foreground text-sm">{suggestion.author}</span>
+                                    <span className="text-[11px] text-muted-foreground uppercase tracking-tight">
+                                        {suggestion.branch}, Year {suggestion.year}
+                                    </span>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <button
