@@ -70,6 +70,16 @@ const Suggestions = () => {
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [newSuggestion, setNewSuggestion] = useState({ title: "", description: "", category: "Academics", tags: "" });
+    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+    const toggleExpand = (id: string) => {
+        setExpandedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
 
     const formatCategory = (cat: string, title?: string, desc?: string) => {
         const textToSearch = ((cat || "") + " " + (title || "") + " " + (desc || "")).toLowerCase();
@@ -228,11 +238,11 @@ const Suggestions = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-4 max-w-4xl w-full">
                 {filteredSuggestions.map((suggestion) => (
-                    <Card key={suggestion.id} className="group hover:shadow-lg transition-all duration-300 border-border/50 bg-card/50 backdrop-blur-sm">
-                        <CardHeader>
-                            <div className="flex justify-between items-start mb-2">
+                    <Card key={suggestion.id} className="group hover:shadow-md transition-all duration-300 border-border/50 bg-card/50 backdrop-blur-sm">
+                        <CardHeader className="pb-2">
+                            <div className="flex justify-between items-start mb-1">
                                 <Badge variant="secondary" className="capitalize bg-secondary/50">
                                     {suggestion.category}
                                 </Badge>
@@ -242,15 +252,25 @@ const Suggestions = () => {
                                     </Badge>
                                 )}
                             </div>
-                            <CardTitle className="line-clamp-2 group-hover:text-primary transition-colors">
+                            <CardTitle className="text-lg group-hover:text-primary transition-colors">
                                 {suggestion.title}
                             </CardTitle>
-                            <CardDescription className="line-clamp-3 mt-2">
-                                {suggestion.description}
-                            </CardDescription>
+                            <div className="mt-2">
+                                <CardDescription className={`text-sm ${expandedIds.has(suggestion.id) ? '' : 'line-clamp-2'}`}>
+                                    {suggestion.description}
+                                </CardDescription>
+                                {suggestion.description && suggestion.description.length > 120 && (
+                                    <button 
+                                        onClick={() => toggleExpand(suggestion.id)}
+                                        className="text-primary text-xs font-semibold mt-1 hover:underline focus:outline-none"
+                                    >
+                                        {expandedIds.has(suggestion.id) ? "Show Less" : "Read More..."}
+                                    </button>
+                                )}
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
+                            <div className="flex items-center justify-between mt-2 pt-3 border-t border-border/30 text-sm text-muted-foreground">
                                 <div className="flex flex-col">
                                     <span className="font-bold text-foreground text-sm">{suggestion.author}</span>
                                     <span className="text-[11px] text-muted-foreground uppercase tracking-tight">
@@ -260,10 +280,10 @@ const Suggestions = () => {
                                 <div className="flex items-center gap-4">
                                     <button
                                         onClick={() => handleVote(suggestion.id)}
-                                        className="flex items-center gap-1 hover:text-primary transition-colors"
+                                        className="flex items-center gap-1.5 hover:text-primary transition-colors bg-secondary/30 px-3 py-1.5 rounded-full"
                                     >
                                         <ThumbsUp className="h-4 w-4" />
-                                        <span>{suggestion.votes}</span>
+                                        <span className="font-medium">{suggestion.votes}</span>
                                     </button>
                                 </div>
                             </div>
