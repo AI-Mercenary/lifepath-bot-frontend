@@ -259,17 +259,20 @@ const Suggestions = () => {
                                     </Badge>
                                 )}
                             </div>
-                            <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                                {suggestion.title}
-                            </CardTitle>
+                            {/* Only show title if it's NOT an auto-generated truncated duplicate of the description */}
+                            {!(suggestion.title.endsWith('...') && suggestion.description.startsWith(suggestion.title.slice(0, -3))) && (
+                                <CardTitle className="text-[15px] font-bold mt-2 group-hover:text-primary transition-colors">
+                                    {suggestion.title}
+                                </CardTitle>
+                            )}
                             <div className="mt-2">
-                                <CardDescription className={`text-sm ${expandedIds.has(suggestion.id) ? '' : 'line-clamp-2'}`}>
+                                <CardDescription className={`text-[15px] leading-relaxed text-foreground/90 ${expandedIds.has(suggestion.id) ? '' : 'line-clamp-3'} whitespace-pre-wrap`}>
                                     {suggestion.description}
                                 </CardDescription>
                                 {suggestion.description && suggestion.description.length > 120 && (
                                     <button 
                                         onClick={() => toggleExpand(suggestion.id)}
-                                        className="text-primary text-xs font-semibold mt-1 hover:underline focus:outline-none"
+                                        className="text-primary text-xs font-semibold mt-2 hover:underline focus:outline-none"
                                     >
                                         {expandedIds.has(suggestion.id) ? "Show Less" : "Read More..."}
                                     </button>
