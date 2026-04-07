@@ -332,12 +332,7 @@ const Chat = () => {
           {/* Messages */}
           <ScrollArea className="flex-1 bg-background/30 p-4">
             <div className="max-w-3xl mx-auto space-y-4 pb-4">
-              <div className="flex justify-center mb-6">
-                <Badge variant="outline" className="bg-background/50 backdrop-blur-sm px-3 py-1 text-xs">
-                  Session: {currentSessionId.split('-').pop()} • Mode: {AGENTS.find(a => a.id === selectedAgent)?.name}
-                </Badge>
-              </div>
-
+              {/* Removed redundant session ID badge to clean up UI overlaps */}
               {messages.map((message) => (
                 <div
                   key={message.id}
