@@ -37,11 +37,11 @@ const Register = () => {
     }
 
     // Email Domain Validation
-    const allowedDomains = ["@gitam.student.edu", "@gitam.in"];
+    const allowedDomains = ["@gitam.edu", "@student.gitam.edu", "@gitam.in"];
     const isValidDomain = allowedDomains.some((domain) => formData.email.endsWith(domain));
 
     if (!isValidDomain) {
-      toast.error("Please use your GITAM email (@gitam.student.edu or @gitam.in)");
+      toast.error("Please use your GITAM email (@gitam.edu, @student.gitam.edu, or @gitam.in)");
       return;
     }
 

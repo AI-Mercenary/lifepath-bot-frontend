@@ -319,7 +319,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       
       // Domain Check for Google Login
       const email = fbUser.email || "";
-      const allowedDomains = ["@gitam.student.edu", "@gitam.in"];
+      const allowedDomains = ["@gitam.edu", "@student.gitam.edu", "@gitam.in"];
       const isValidDomain = allowedDomains.some((domain) => email.endsWith(domain));
 
       // Allow admin email if it happens to be a google login (unlikely for static, but good practice)
@@ -327,7 +327,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       if (!isValidDomain && !isAdmin) {
         await signOut(auth); // Sign out immediately
-        toast.error("Please use your GITAM email (@gitam.student.edu or @gitam.in)");
+        toast.error("Please use your GITAM email (@gitam.edu, @student.gitam.edu, or @gitam.in)");
         return { success: false };
       }
 
